@@ -58,24 +58,18 @@ post '/' do
     # always attack if no one attack me and I can attack
     current_status["arena"]["state"].sort_by {|_, state| state["score"] }.reverse.each do |user_link, state|
       next if user_link == me
-      puts "======player: #{user_link}"
       can_attack = attackable_range.include?([state["x"], state["y"]])
       return "T" if can_attack && !my_state["wasHit"]
 
       is_possible_attacker = attcker_possible_range.include?([state["x"], state["y"]])
       next if !is_possible_attacker
-      puts "----is_possible_attacker: #{is_possible_attacker}"
-      puts "----score > me: #{state["score"] >= my_state["score"]}"
-      puts "----can_attack: #{can_attack}"
-      puts "----play face reverse: #{reverse_face_to == state["direction"]}"
       return ["T", "T", "T", "F"].sample if is_possible_attacker && state["score"] >= my_state["score"] && can_attack
       return ["R", "R", "L", "L", "F"].sample if is_possible_attacker && state["score"] >= my_state["score"] && !can_attack && reverse_face_to == state["direction"]
-      puts "======"
     end
 
     action_take = ["F", "R", "L"].sample
 
-    unless action_take == "F" && next_step_is_out_of_range
+    unless (action_take == "F" && next_step_is_out_of_range) || my_state["y"] == max_height || my_state["x"] == max_width
       puts "----action take: #{action_take}"
       return action_take
     end
