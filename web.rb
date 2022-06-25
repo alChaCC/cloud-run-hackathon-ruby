@@ -63,7 +63,7 @@ post '/' do
 
       is_possible_attacker = attcker_possible_range.include?([state["x"], state["y"]])
       next if !is_possible_attacker
-      return ["T", "T", "T", "F"].sample if is_possible_attacker && state["score"] >= my_state["score"] && can_attack
+      return ["T", "T", "T", "F", "R", "L"].sample if is_possible_attacker && state["score"] >= my_state["score"] && can_attack
       return ["R", "R", "L", "L", "F"].sample if is_possible_attacker && state["score"] >= my_state["score"] && !can_attack && reverse_face_to == state["direction"]
     end
 
