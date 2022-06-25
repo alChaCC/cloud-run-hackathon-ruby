@@ -36,33 +36,13 @@ post '/' do
     attackable_range =
       case my_face_to
       when "N"
-        {
-          "N" => [[my_state["x"], my_state["y"] - 2], [my_state["x"], my_state["y"] - 1]],
-          "W" => [],
-          "S" => [[my_state["x"], my_state["y"] - 3], [my_state["x"], my_state["y"] - 2], [my_state["x"], my_state["y"] - 1]],
-          "E" => []
-        }
+        [[my_state["x"], my_state["y"] - 3], [my_state["x"], my_state["y"] - 2], [my_state["x"], my_state["y"] - 1]]
       when "W"
-        {
-          "N" => [],
-          "W" => [[my_state["x"] - 2, my_state["y"]], [my_state["x"] - 1, my_state["y"]]],
-          "S" => [],
-          "E" => [[my_state["x"] - 3, my_state["y"]], [my_state["x"] - 2, my_state["y"]], [my_state["x"] - 1, my_state["y"]]]
-        }
+        [[my_state["x"] - 3, my_state["y"]], [my_state["x"] - 2, my_state["y"]], [my_state["x"] - 1, my_state["y"]]]
       when "S"
-        {
-          "N" => [[my_state["x"], my_state["y"] + 3], [my_state["x"], my_state["y"] + 2], [my_state["x"], my_state["y"] + 1]],
-          "W" => [],
-          "S" => [[my_state["x"], my_state["y"] + 2], [my_state["x"], my_state["y"] + 1]],
-          "E" => []
-        }
+       [[my_state["x"], my_state["y"] + 3], [my_state["x"], my_state["y"] + 2], [my_state["x"], my_state["y"] + 1]]
       when "E"
-        {
-          "N" => [],
-          "W" => [[my_state["x"] + 3, my_state["y"]], [my_state["x"] + 2, my_state["y"]], [my_state["x"] + 1, my_state["y"]]],
-          "S" => [],
-          "E" => [[my_state["x"] + 2, my_state["y"]], [my_state["x"] + 1, my_state["y"]]]
-        }
+        [[my_state["x"] + 3, my_state["y"]], [my_state["x"] + 2, my_state["y"]], [my_state["x"] + 1, my_state["y"]]]
       end
 
     puts "----attackable_range: #{attackable_range}"
@@ -70,9 +50,25 @@ post '/' do
     current_status["arena"]["state"].each do |user_link, state|
       next if user_link == me
 
-      if attackable_range[state["direction"]].include?([state["x"], state["y"]])
-        puts "----action take: T"
-        return "T"
+      if attackable_range.include?([state["x"], state["y"]])
+        if my_state["wasHit"]
+          # if anyone is able to attach me then run
+          my_next_step =
+            case my_face_to
+            when "N"
+              [my_state["x"], my_state["y"] - 1]
+            when "W"
+              [my_state["x"] - 1, my_state["y"]]
+            when "S"
+              [my_state["x"], my_state["y"] + 1]
+            when "E"
+              [my_state["x"] + 1, my_state["y"]]
+            end
+          return "F" unless my_next_step[0] <= 0 || my_next_step[0] >= max_width || my_next_step[1] <= 0 || my_next_step[1] >= max_height
+        else
+          # try attack again
+          return "T"
+        end
       end
     end
 
