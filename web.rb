@@ -20,6 +20,66 @@ post '/' do
     my_state = current_status["arena"]["state"][me]
     max_width = current_status["arena"]["dims"][0]
     max_height = current_status["arena"]["dims"][1]
+
+    my_face_to = my_state["direction"]
+    puts "----my_face_to: #{my_face_to}"
+    # prepare data
+    attcker_possible_range = [
+      [my_state["x"], my_state["y"] - 1], [my_state["x"], my_state["y"] - 2], [my_state["x"], my_state["y"] - 3],
+      [my_state["x"] - 1, my_state["y"]], [my_state["x"] - 2, my_state["y"]], [my_state["x"] - 3, my_state["y"]],
+      [my_state["x"], my_state["y"] + 1], [my_state["x"], my_state["y"] + 2], [my_state["x"], my_state["y"] + 3],
+      [my_state["x"] + 1, my_state["y"]], [my_state["x"] + 2, my_state["y"]], [my_state["x"] + 3, my_state["y"]]
+    ]
+    case my_face_to
+    when "N"
+      attackable_range = [[my_state["x"], my_state["y"] - 1], [my_state["x"], my_state["y"] - 2], [my_state["x"], my_state["y"] - 3]]
+      reverse_face_to = "S"
+      my_next_step = [my_state["x"], my_state["y"] - 1]
+      next_step_is_out_of_range = (my_state["y"] - 1) <= 0
+    when "W"
+      attackable_range = [[my_state["x"] - 1, my_state["y"]], [my_state["x"] - 2, my_state["y"]], [my_state["x"] - 3, my_state["y"]]]
+      reverse_face_to = "E"
+      my_next_step = [my_state["x"] - 1, my_state["y"]]
+      next_step_is_out_of_range = (my_state["x"] - 1) <= 0
+    when "S"
+      attackable_range = [[my_state["x"], my_state["y"] + 1], [my_state["x"], my_state["y"] + 2], [my_state["x"], my_state["y"] + 3]]
+      reverse_face_to = "N"
+      my_next_step = [my_state["x"], my_state["y"] + 1]
+      next_step_is_out_of_range = (my_state["y"] + 1) >= max_height
+    when "E"
+      attackable_range = [[my_state["x"] + 1, my_state["y"]], [my_state["x"] + 2, my_state["y"]], [my_state["x"] + 3, my_state["y"]]]
+      reverse_face_to = "W"
+      my_next_step = [my_state["x"] + 1, my_state["y"]]
+      next_step_is_out_of_range = (my_state["x"] + 1) >= max_width
+    end
+
+    puts "----attackable_range: #{attackable_range}"
+
+    # always attack if no one attack me and I can attack
+    current_status["arena"]["state"].sort_by {|_, state| state["score"] }.reverse.each do |user_link, state|
+      next if user_link == me
+      puts "======player: #{user_link}"
+      can_attack = attackable_range.include?([state["x"], state["y"]])
+      return "T" if can_attack && !my_state["wasHit"]
+
+      is_possible_attacker = attcker_possible_range.include?([state["x"], state["y"]])
+      next if !is_possible_attacker
+      puts "----is_possible_attacker: #{is_possible_attacker}"
+      puts "----score > me: #{state["score"] >= my_state["score"]}"
+      puts "----can_attack: #{can_attack}"
+      puts "----play face reverse: #{reverse_face_to == state["direction"]}"
+      return ["T", "T", "T", "F"].sample if is_possible_attacker && state["score"] >= my_state["score"] && can_attack
+      return ["R", "R", "L", "L", "F"].sample if is_possible_attacker && state["score"] >= my_state["score"] && !can_attack && reverse_face_to == state["direction"]
+      puts "======"
+    end
+
+    action_take = ["F", "R", "L"].sample
+
+    unless action_take == "F" && next_step_is_out_of_range
+      puts "----action take: #{action_take}"
+      return action_take
+    end
+
     quadrant = if my_state["x"] >= max_width / 2 && my_state["y"] <= max_height / 2
       1
     elsif my_state["x"] <= max_width / 2 && my_state["y"] <= max_height / 2
@@ -28,52 +88,6 @@ post '/' do
       3
     elsif my_state["x"] >= max_width / 2 && my_state["y"] >= max_height / 2
       4
-    end
-
-    my_face_to = my_state["direction"]
-    puts "----my_face_to: #{my_face_to}"
-    # Attack if someone in front of me either face to me
-    attackable_range =
-      case my_face_to
-      when "N"
-        [[my_state["x"], my_state["y"] - 3], [my_state["x"], my_state["y"] - 2], [my_state["x"], my_state["y"] - 1]]
-      when "W"
-        [[my_state["x"] - 3, my_state["y"]], [my_state["x"] - 2, my_state["y"]], [my_state["x"] - 1, my_state["y"]]]
-      when "S"
-       [[my_state["x"], my_state["y"] + 3], [my_state["x"], my_state["y"] + 2], [my_state["x"], my_state["y"] + 1]]
-      when "E"
-        [[my_state["x"] + 3, my_state["y"]], [my_state["x"] + 2, my_state["y"]], [my_state["x"] + 1, my_state["y"]]]
-      end
-
-    puts "----attackable_range: #{attackable_range}"
-
-    current_status["arena"]["state"].each do |user_link, state|
-      next if user_link == me
-
-      if attackable_range.include?([state["x"], state["y"]])
-        if my_state["wasHit"]
-          # if anyone is able to attach me then run
-          my_next_step =
-            case my_face_to
-            when "N"
-              [my_state["x"], my_state["y"] - 1]
-            when "W"
-              [my_state["x"] - 1, my_state["y"]]
-            when "S"
-              [my_state["x"], my_state["y"] + 1]
-            when "E"
-              [my_state["x"] + 1, my_state["y"]]
-            end
-          unless my_next_step[0] < 0 || my_next_step[0] > max_width || my_next_step[1] < 0 || my_next_step[1] > max_height || (my_next_step[0] == state["x"] && my_next_step[1] == state["y"])
-            puts "----action take: F"
-            return "F"
-          end
-        else
-          # try attack again
-          puts "----action take: F"
-          return "T"
-        end
-      end
     end
 
     moves = case quadrant
