@@ -64,7 +64,7 @@ post '/' do
             when "E"
               [my_state["x"] + 1, my_state["y"]]
             end
-          return "F" unless my_next_step[0] <= 0 || my_next_step[0] >= max_width || my_next_step[1] <= 0 || my_next_step[1] >= max_height
+          return "F" unless my_next_step[0] < 0 || my_next_step[0] > max_width || my_next_step[1] < 0 || my_next_step[1] > max_height
         else
           # try attack again
           return "T"
