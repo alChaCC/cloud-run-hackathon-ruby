@@ -87,12 +87,19 @@ post '/' do
       "run"
     end
     puts "----strategy: #{strategy}"
+
     case strategy
     when "fight"
       return "T"
     when "run"
-      return "F" unless anyone_in_front_of_me || next_step_is_out_of_range
-      return ["R", "L"].sample
+      unless anyone_in_front_of_me || next_step_is_out_of_range
+        puts "----action take: #{action}"
+        return "F"
+      end
+
+      action = ["R", "L"].sample
+      puts "----action take: #{action}"
+      return action
     end
 
     puts "----final closest_person_location: #{closest_person_location}"
@@ -264,7 +271,7 @@ post '/' do
       end
     end
     action = moves.sample
-    puts "----action take: #{action}"
+    puts "----5. action take: #{action}"
     action
   rescue => e
     puts "Something went wrong: #{e.backtrace}"
