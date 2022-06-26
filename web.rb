@@ -76,25 +76,47 @@ post '/' do
       if is_possible_attacker
         attcker_count += 1
         better_direction << case my_face_to
-        when "N", "S"
+        when "N"
           case state["direction"]
           when "N"
             ["R", "L"]
           when "W"
-            ["F"]
+            (anyone_in_front_of_me || next_step_is_out_of_range) ? ["L"] : ["F"]
           when "S"
             ["R", "L"]
           when "E"
-            ["F"]
+            (anyone_in_front_of_me || next_step_is_out_of_range) ? ["R"] : ["F"]
           end
-        when "W", "E"
+        when "S"
           case state["direction"]
           when "N"
-            ["F"]
+            ["R", "L"]
+          when "W"
+            (anyone_in_front_of_me || next_step_is_out_of_range) ? ["R"] : ["F"]
+          when "S"
+            ["R", "L"]
+          when "E"
+            (anyone_in_front_of_me || next_step_is_out_of_range) ? ["L"] : ["F"]
+          end
+        when "W"
+          case state["direction"]
+          when "N"
+            (anyone_in_front_of_me || next_step_is_out_of_range) ? ["R"] : ["F"]
           when "W"
             ["R", "L"]
           when "S"
-            ["F"]
+            (anyone_in_front_of_me || next_step_is_out_of_range) ? ["L"] : ["F"]
+          when "E"
+            ["R", "L"]
+          end
+        when "E"
+          case state["direction"]
+          when "N"
+            (anyone_in_front_of_me || next_step_is_out_of_range) ? ["L"] : ["F"]
+          when "W"
+            ["R", "L"]
+          when "S"
+            (anyone_in_front_of_me || next_step_is_out_of_range) ? ["R"] : ["F"]
           when "E"
             ["R", "L"]
           end
@@ -105,7 +127,7 @@ post '/' do
 
     strategy = if attcker_count == 1 && attackable && my_state["wasHit"]
       # try to find back or run
-      ["fight", "run", "run", "run"].sample
+      ["fight", "run", "run", "run", "run"].sample
     elsif my_state["wasHit"]
       "run"
     end
@@ -115,9 +137,7 @@ post '/' do
     when "fight"
       return "T"
     when "run"
-      better_direction = better_direction.flatten.reject { |e| e == "F" } if anyone_in_front_of_me || next_step_is_out_of_range
       action = better_direction.flatten.sample
-      action = ["L", "R"].sample if action.nil?
       puts "----action take: #{action}"
       return action
     end
