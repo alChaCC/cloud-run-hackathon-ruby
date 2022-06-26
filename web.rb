@@ -23,6 +23,7 @@ post '/' do
 
     my_face_to = my_state["direction"]
     puts "----my_face_to: #{my_face_to}"
+    puts "----my_location: #{[my_state["x"], my_state["y"]]}"
     # prepare data
     attcker_possible_range = {
       "N" => [[my_state["x"], my_state["y"] + 1], [my_state["x"], my_state["y"] + 2], [my_state["x"], my_state["y"] + 3]],
@@ -35,19 +36,19 @@ post '/' do
     when "N"
       attackable_range = [[my_state["x"], my_state["y"] - 1], [my_state["x"], my_state["y"] - 2], [my_state["x"], my_state["y"] - 3]]
       my_next_step = [my_state["x"], my_state["y"] - 1]
-      next_step_is_out_of_range = (my_state["y"] - 1) <= 0
+      next_step_is_out_of_range = (my_state["y"] - 1) < 0
     when "W"
       attackable_range = [[my_state["x"] - 1, my_state["y"]], [my_state["x"] - 2, my_state["y"]], [my_state["x"] - 3, my_state["y"]]]
       my_next_step = [my_state["x"] - 1, my_state["y"]]
-      next_step_is_out_of_range = (my_state["x"] - 1) <= 0
+      next_step_is_out_of_range = (my_state["x"] - 1) < 0
     when "S"
       attackable_range = [[my_state["x"], my_state["y"] + 1], [my_state["x"], my_state["y"] + 2], [my_state["x"], my_state["y"] + 3]]
       my_next_step = [my_state["x"], my_state["y"] + 1]
-      next_step_is_out_of_range = (my_state["y"] + 1) >= max_height
+      next_step_is_out_of_range = (my_state["y"] + 1) > max_height
     when "E"
       attackable_range = [[my_state["x"] + 1, my_state["y"]], [my_state["x"] + 2, my_state["y"]], [my_state["x"] + 3, my_state["y"]]]
       my_next_step = [my_state["x"] + 1, my_state["y"]]
-      next_step_is_out_of_range = (my_state["x"] + 1) >= max_width
+      next_step_is_out_of_range = (my_state["x"] + 1) > max_width
     end
 
     puts "----attackable_range: #{attackable_range}"
@@ -138,14 +139,13 @@ post '/' do
       return "T"
     when "run"
       action = better_direction.flatten.sample
-      puts "----action take: #{action}"
+      puts "----after strategy action take: #{action}"
       return action
     end
 
-    puts "----final closest_person_location: #{closest_person_location}"
+    puts "----going to closest person: #{closest_person_location}"
 
     # find closest one and decide next step
-    puts "----my_state: #{my_state}"
     x_direction = closest_person_location[0] - my_state["x"]
     y_direction = closest_person_location[1] - my_state["y"]
 
@@ -270,9 +270,9 @@ post '/' do
       when "N"
         ["L"]
       when "W"
-        ["F", "L"]
+        anyone_in_front_of_me ? ["L"] : ["F", "L"]
       when "S"
-        ["F", "R"]
+        anyone_in_front_of_me ? ["R"] : ["F", "R"]
       when "E"
         ["R"]
       end
@@ -283,27 +283,27 @@ post '/' do
       when "W"
         ["L"]
       when "S"
-        ["L", "F"]
+        anyone_in_front_of_me ? ["L"] : ["F", "L"]
       when "E"
-        ["R", "F"]
+        anyone_in_front_of_me ? ["R"] : ["F", "R"]
       end
     when 3
       case my_face_to
       when "N"
-        ["F", "R"]
+        anyone_in_front_of_me ? ["R"] : ["F", "R"]
       when "W"
         ["R"]
       when "S"
         ["L"]
       when "E"
-        ["L", "F"]
+        anyone_in_front_of_me ? ["L"] : ["F", "L"]
       end
     when 4
       case my_face_to
       when "N"
-        ["F", "L"]
+        anyone_in_front_of_me ? ["L"] : ["F", "L"]
       when "W"
-        ["F", "R"]
+        anyone_in_front_of_me ? ["R"] : ["F", "R"]
       when "S"
         ["R"]
       when "E"
@@ -311,7 +311,7 @@ post '/' do
       end
     end
     action = moves.sample
-    puts "----5. action take: #{action}"
+    puts "----in boundary action take: #{action}"
     action
   rescue => e
     puts "Something went wrong: #{e.backtrace}"
