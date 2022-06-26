@@ -159,7 +159,7 @@ post '/' do
       when "W"
         "R"
       when "S"
-        "L"
+        ["L", "R"].sample
       when "E"
         "L"
       end
@@ -167,7 +167,7 @@ post '/' do
       # down
       case my_face_to
       when "N"
-        "R"
+        ["L", "R"].sample
       when "W"
         "L"
       when "S"
@@ -181,7 +181,7 @@ post '/' do
       when "N"
         "R"
       when "W"
-        "L"
+        ["L", "R"].sample
       when "S"
         "L"
       when "E"
@@ -197,13 +197,13 @@ post '/' do
       when "S"
         "R"
       when "E"
-        "L"
+        ["L", "R"].sample
       end
     elsif x_direction > 0 && y_direction > 0
       # right + down
       case my_face_to
       when "N"
-        "R"
+        ["L", "R"].sample
       when "W"
         "L"
       when "S"
@@ -219,23 +219,11 @@ post '/' do
       when "W"
         "R"
       when "S"
-        "L"
+        ["L", "R"].sample
       when "E"
         "F"
       end
     elsif x_direction < 0 && y_direction < 0
-      # left + down
-      case my_face_to
-      when "N"
-        "L"
-      when "W"
-        "F"
-      when "S"
-        "F"
-      when "E"
-        "R"
-      end
-    elsif x_direction < 0 && y_direction > 0
       # left + up
       case my_face_to
       when "N"
@@ -243,13 +231,25 @@ post '/' do
       when "W"
         "F"
       when "S"
+        ["L", "R"].sample
+      when "E"
         "L"
+      end
+    elsif x_direction < 0 && y_direction > 0
+      # left + down
+      case my_face_to
+      when "N"
+        ["L", "R"].sample
+      when "W"
+        "F"
+      when "S"
+        "F"
       when "E"
         "R"
       end
     end
 
-    unless (action_take == "F" && next_step_is_out_of_range) || my_state["y"] == max_height || my_state["x"] == max_width
+    unless action_take == "F" && next_step_is_out_of_range
       puts "----action take: #{action_take}"
       return action_take
     end
