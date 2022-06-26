@@ -117,7 +117,7 @@ post '/' do
     when "run"
       better_direction = better_direction.flatten.reject { |e| e == "F" } if anyone_in_front_of_me || next_step_is_out_of_range
       action = better_direction.flatten.sample
-
+      action = ["L", "R"].sample if action.nil?
       puts "----action take: #{action}"
       return action
     end
