@@ -36,19 +36,19 @@ post '/' do
     when "N"
       attackable_range = [[my_state["x"], my_state["y"] - 1], [my_state["x"], my_state["y"] - 2], [my_state["x"], my_state["y"] - 3]]
       my_next_step = [my_state["x"], my_state["y"] - 1]
-      next_step_is_out_of_range = (my_state["y"] - 1) < 0
+      next_step_is_out_of_range = (my_state["y"] - 1) <= 0
     when "W"
       attackable_range = [[my_state["x"] - 1, my_state["y"]], [my_state["x"] - 2, my_state["y"]], [my_state["x"] - 3, my_state["y"]]]
       my_next_step = [my_state["x"] - 1, my_state["y"]]
-      next_step_is_out_of_range = (my_state["x"] - 1) < 0
+      next_step_is_out_of_range = (my_state["x"] - 1) <= 0
     when "S"
       attackable_range = [[my_state["x"], my_state["y"] + 1], [my_state["x"], my_state["y"] + 2], [my_state["x"], my_state["y"] + 3]]
       my_next_step = [my_state["x"], my_state["y"] + 1]
-      next_step_is_out_of_range = (my_state["y"] + 1) > max_height
+      next_step_is_out_of_range = (my_state["y"] + 1) >= max_height
     when "E"
       attackable_range = [[my_state["x"] + 1, my_state["y"]], [my_state["x"] + 2, my_state["y"]], [my_state["x"] + 3, my_state["y"]]]
       my_next_step = [my_state["x"] + 1, my_state["y"]]
-      next_step_is_out_of_range = (my_state["x"] + 1) > max_width
+      next_step_is_out_of_range = (my_state["x"] + 1) >= max_width
     end
 
     puts "----attackable_range: #{attackable_range}"
