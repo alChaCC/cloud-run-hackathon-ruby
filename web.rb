@@ -58,7 +58,7 @@ post '/' do
     anyone_in_front_of_me = false
     attcker_count = 0
     better_direction = []
-    current_status["arena"]["state"].sort_by {|_, state| state["score"] }.reverse.each do |user_link, state|
+    current_status["arena"]["state"].sort_by {|_, state| state["score"] }.each do |user_link, state|
       next if user_link == me
       anyone_in_front_of_me ||= my_next_step.include?([state["x"], state["y"]])
       can_attack = attackable_range.include?([state["x"], state["y"]])
