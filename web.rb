@@ -59,7 +59,7 @@ post '/' do
     closest_person_dis = max_width + max_height
     attackable = false
     anyone_in_front_of_me = false
-
+    attcker_count = 0
     current_status["arena"]["state"].sort_by {|_, state| state["score"] }.reverse.each do |user_link, state|
       next if user_link == me
       anyone_in_front_of_me ||= my_next_step.include?([state["x"], state["y"]])
@@ -76,10 +76,11 @@ post '/' do
 
       is_possible_attacker = attcker_possible_range.include?([state["x"], state["y"]])
       attackable = true if can_attack
+      attcker_count += 1 if is_possible_attacker
       next if !is_possible_attacker
     end
 
-    strategy = if attackable && my_state["wasHit"]
+    strategy = if attackable && my_state["wasHit"] && attcker_count < 2
       # try to find back or run
       ["fight", "run"].sample
     elsif my_state["wasHit"]
