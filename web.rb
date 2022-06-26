@@ -34,22 +34,18 @@ post '/' do
     case my_face_to
     when "N"
       attackable_range = [[my_state["x"], my_state["y"] - 1], [my_state["x"], my_state["y"] - 2], [my_state["x"], my_state["y"] - 3]]
-      reverse_face_to = "S"
       my_next_step = [my_state["x"], my_state["y"] - 1]
       next_step_is_out_of_range = (my_state["y"] - 1) <= 0
     when "W"
       attackable_range = [[my_state["x"] - 1, my_state["y"]], [my_state["x"] - 2, my_state["y"]], [my_state["x"] - 3, my_state["y"]]]
-      reverse_face_to = "E"
       my_next_step = [my_state["x"] - 1, my_state["y"]]
       next_step_is_out_of_range = (my_state["x"] - 1) <= 0
     when "S"
       attackable_range = [[my_state["x"], my_state["y"] + 1], [my_state["x"], my_state["y"] + 2], [my_state["x"], my_state["y"] + 3]]
-      reverse_face_to = "N"
       my_next_step = [my_state["x"], my_state["y"] + 1]
       next_step_is_out_of_range = (my_state["y"] + 1) >= max_height
     when "E"
       attackable_range = [[my_state["x"] + 1, my_state["y"]], [my_state["x"] + 2, my_state["y"]], [my_state["x"] + 3, my_state["y"]]]
-      reverse_face_to = "W"
       my_next_step = [my_state["x"] + 1, my_state["y"]]
       next_step_is_out_of_range = (my_state["x"] + 1) >= max_width
     end
@@ -61,6 +57,7 @@ post '/' do
     attackable = false
     anyone_in_front_of_me = false
     attcker_count = 0
+    better_direction = []
     current_status["arena"]["state"].sort_by {|_, state| state["score"] }.reverse.each do |user_link, state|
       next if user_link == me
       anyone_in_front_of_me ||= my_next_step.include?([state["x"], state["y"]])
@@ -76,13 +73,39 @@ post '/' do
 
       is_possible_attacker = attcker_possible_range[state["direction"]].include?([state["x"], state["y"]])
       attackable = true if can_attack
-      attcker_count += 1 if is_possible_attacker
+      if is_possible_attacker
+        attcker_count += 1
+        better_direction << case my_face_to
+        when "N", "S"
+          case state["direction"]
+          when "N"
+            ["R", "L"]
+          when "W"
+            ["F"]
+          when "S"
+            ["R", "L"]
+          when "E"
+            ["F"]
+          end
+        when "W", "E"
+          case state["direction"]
+          when "N"
+            ["F"]
+          when "W"
+            ["R", "L"]
+          when "S"
+            ["F"]
+          when "E"
+            ["R", "L"]
+          end
+        end
+      end
       next if !is_possible_attacker
     end
 
     strategy = if attcker_count == 1 && attackable && my_state["wasHit"]
       # try to find back or run
-      ["fight", "run", "run"].sample
+      ["fight", "run", "run", "run"].sample
     elsif my_state["wasHit"]
       "run"
     end
@@ -92,12 +115,9 @@ post '/' do
     when "fight"
       return "T"
     when "run"
-      unless anyone_in_front_of_me || next_step_is_out_of_range
-        puts "----action take: #{action}"
-        return "F"
-      end
+      better_direction = better_direction.flatten.reject { |e| e == "F" } if anyone_in_front_of_me || next_step_is_out_of_range
+      action = better_direction.flatten.sample
 
-      action = ["R", "L"].sample
       puts "----action take: #{action}"
       return action
     end
