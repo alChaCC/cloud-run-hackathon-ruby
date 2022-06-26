@@ -57,9 +57,12 @@ post '/' do
 
     closest_person_location = [max_width, max_height]
     closest_person_dis = max_width + max_height
+    attackable = false
+    anyone_in_front_of_me = false
 
-    current_status["arena"]["state"].sort_by {|_, state| state["score"] }.each do |user_link, state|
+    current_status["arena"]["state"].sort_by {|_, state| state["score"] }.reverse.each do |user_link, state|
       next if user_link == me
+      anyone_in_front_of_me ||= my_next_step.include?([state["x"], state["y"]])
       can_attack = attackable_range.include?([state["x"], state["y"]])
       # always attack if no one attack me and I can attack
       return "T" if can_attack && !my_state["wasHit"]
@@ -72,8 +75,23 @@ post '/' do
       puts "----closest_person_location: #{closest_person_location}"
 
       is_possible_attacker = attcker_possible_range.include?([state["x"], state["y"]])
+      attackable = true if can_attack
       next if !is_possible_attacker
-      return ["T", "T", "T", "R", "L", "F"].sample if is_possible_attacker && can_attack
+    end
+
+    strategy = if attackable && my_state["wasHit"]
+      # try to find back or run
+      ["fight", "run"].sample
+    elsif my_state["wasHit"]
+      "run"
+    end
+
+    case strategy
+    when "fight"
+      return "T"
+    when "run"
+      return "F" unless anyone_in_front_of_me || next_step_is_out_of_range
+      return ["R", "F"].sample
     end
 
     puts "----final closest_person_location: #{closest_person_location}"
