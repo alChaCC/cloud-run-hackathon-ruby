@@ -311,8 +311,13 @@ post '/' do
       end
     end
     action = moves.sample
-    puts "----in boundary action take: #{action}"
-    action
+    if action == "F" && next_step_is_out_of_range
+      puts "----action take: trun R or L"
+      return ["R", "L"].sample
+    else
+      puts "----action take: #{action}"
+      return action
+    end
   rescue => e
     puts "Something went wrong: #{e.backtrace}"
     ["F", "L", "R", "T"].sample
