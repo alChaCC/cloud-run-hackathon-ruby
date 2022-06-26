@@ -24,12 +24,13 @@ post '/' do
     my_face_to = my_state["direction"]
     puts "----my_face_to: #{my_face_to}"
     # prepare data
-    attcker_possible_range = [
-      [my_state["x"], my_state["y"] - 1], [my_state["x"], my_state["y"] - 2], [my_state["x"], my_state["y"] - 3],
-      [my_state["x"] - 1, my_state["y"]], [my_state["x"] - 2, my_state["y"]], [my_state["x"] - 3, my_state["y"]],
-      [my_state["x"], my_state["y"] + 1], [my_state["x"], my_state["y"] + 2], [my_state["x"], my_state["y"] + 3],
-      [my_state["x"] + 1, my_state["y"]], [my_state["x"] + 2, my_state["y"]], [my_state["x"] + 3, my_state["y"]]
-    ]
+    attcker_possible_range = {
+      "N" => [[my_state["x"], my_state["y"] - 1], [my_state["x"], my_state["y"] - 2], [my_state["x"], my_state["y"] - 3]],
+      "W" => [[my_state["x"] + 1, my_state["y"]], [my_state["x"] + 2, my_state["y"]], [my_state["x"] + 3, my_state["y"]]],
+      "S" => [[my_state["x"], my_state["y"] + 1], [my_state["x"], my_state["y"] + 2], [my_state["x"], my_state["y"] + 3]],
+      "E" => [[my_state["x"] - 1, my_state["y"]], [my_state["x"] - 2, my_state["y"]], [my_state["x"] - 3, my_state["y"]]]
+    }
+
     case my_face_to
     when "N"
       attackable_range = [[my_state["x"], my_state["y"] - 1], [my_state["x"], my_state["y"] - 2], [my_state["x"], my_state["y"] - 3]]
@@ -72,27 +73,26 @@ post '/' do
         closest_person_location = [state["x"], state["y"]]
         closest_person_dis = current_dis
       end
-      puts "----closest_person_location: #{closest_person_location}"
 
-      is_possible_attacker = attcker_possible_range.include?([state["x"], state["y"]])
+      is_possible_attacker = attcker_possible_range[state["direction"]].include?([state["x"], state["y"]])
       attackable = true if can_attack
       attcker_count += 1 if is_possible_attacker
       next if !is_possible_attacker
     end
 
-    strategy = if attackable && my_state["wasHit"] && attcker_count < 2
+    strategy = if attcker_count == 1 && attackable && my_state["wasHit"]
       # try to find back or run
-      ["fight", "run"].sample
+      ["fight", "run", "run"].sample
     elsif my_state["wasHit"]
       "run"
     end
-
+    puts "----strategy: #{strategy}"
     case strategy
     when "fight"
       return "T"
     when "run"
       return "F" unless anyone_in_front_of_me || next_step_is_out_of_range
-      return ["R", "F"].sample
+      return ["R", "L"].sample
     end
 
     puts "----final closest_person_location: #{closest_person_location}"
