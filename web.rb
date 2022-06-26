@@ -55,19 +55,133 @@ post '/' do
 
     puts "----attackable_range: #{attackable_range}"
 
-    # always attack if no one attack me and I can attack
-    current_status["arena"]["state"].sort_by {|_, state| state["score"] }.reverse.each do |user_link, state|
+    closest_person_location = [max_width, max_height]
+    closest_person_dis = max_width + max_height
+
+    current_status["arena"]["state"].sort_by {|_, state| state["score"] }.each do |user_link, state|
       next if user_link == me
       can_attack = attackable_range.include?([state["x"], state["y"]])
+      # always attack if no one attack me and I can attack
       return "T" if can_attack && !my_state["wasHit"]
+
+      current_dis = (state["x"] - my_state["x"]).abs + (state["y"] - my_state["y"]).abs
+      if current_dis < closest_person_dis
+        closest_person_location = [state["x"], state["y"]]
+        closest_person_dis = current_dis
+      end
+      puts "----closest_person_location: #{closest_person_location}"
 
       is_possible_attacker = attcker_possible_range.include?([state["x"], state["y"]])
       next if !is_possible_attacker
-      return ["T", "T", "T", "F", "R", "L"].sample if is_possible_attacker && state["score"] >= my_state["score"] && can_attack
-      return ["R", "R", "L", "L", "F"].sample if is_possible_attacker && state["score"] >= my_state["score"] && !can_attack && reverse_face_to == state["direction"]
+      return ["T", "T", "T", "R", "L", "F"].sample if is_possible_attacker && can_attack
     end
 
-    action_take = ["F", "R", "L"].sample
+    puts "----final closest_person_location: #{closest_person_location}"
+
+    # find closest one and decide next step
+    puts "----my_state: #{my_state}"
+    x_direction = closest_person_location[0] - my_state["x"]
+    y_direction = closest_person_location[1] - my_state["y"]
+
+    puts "----x_direction: #{x_direction}"
+    puts "----y_direction: #{y_direction}"
+    action_take = if x_direction == 0 && y_direction < 0
+      # up
+      case my_face_to
+      when "N"
+        "F"
+      when "W"
+        "R"
+      when "S"
+        "L"
+      when "E"
+        "L"
+      end
+    elsif x_direction == 0 && y_direction > 0
+      # down
+      case my_face_to
+      when "N"
+        "R"
+      when "W"
+        "L"
+      when "S"
+        "F"
+      when "E"
+        "R"
+      end
+    elsif x_direction > 0 && y_direction == 0
+      # right
+      case my_face_to
+      when "N"
+        "R"
+      when "W"
+        "L"
+      when "S"
+        "L"
+      when "E"
+        "F"
+      end
+    elsif x_direction < 0 && y_direction == 0
+      # left
+      case my_face_to
+      when "N"
+        "L"
+      when "W"
+        "F"
+      when "S"
+        "R"
+      when "E"
+        "L"
+      end
+    elsif x_direction > 0 && y_direction > 0
+      # right + down
+      case my_face_to
+      when "N"
+        "R"
+      when "W"
+        "L"
+      when "S"
+        "F"
+      when "E"
+        "F"
+      end
+    elsif x_direction > 0 && y_direction < 0
+      # right + up
+      case my_face_to
+      when "N"
+        "F"
+      when "W"
+        "R"
+      when "S"
+        "L"
+      when "E"
+        "F"
+      end
+    elsif x_direction < 0 && y_direction < 0
+      # left + down
+      case my_face_to
+      when "N"
+        "L"
+      when "W"
+        "F"
+      when "S"
+        "F"
+      when "E"
+        "R"
+      end
+    elsif x_direction < 0 && y_direction > 0
+      # left + up
+      case my_face_to
+      when "N"
+        "F"
+      when "W"
+        "F"
+      when "S"
+        "L"
+      when "E"
+        "R"
+      end
+    end
 
     unless (action_take == "F" && next_step_is_out_of_range) || my_state["y"] == max_height || my_state["x"] == max_width
       puts "----action take: #{action_take}"
@@ -134,7 +248,7 @@ post '/' do
     puts "----action take: #{action}"
     action
   rescue => e
-    puts "Something went wrong: #{e.message}"
+    puts "Something went wrong: #{e.backtrace}"
     ["F", "L", "R", "T"].sample
   end
 end
