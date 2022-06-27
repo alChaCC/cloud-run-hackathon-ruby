@@ -14,7 +14,6 @@ end
 post '/' do
   begin
     current_status = JSON.parse(request.body.read)
-    puts "----current_status: #{current_status}"
 
     me = current_status["_links"]["self"]["href"]
     my_state = current_status["arena"]["state"][me]
@@ -22,8 +21,7 @@ post '/' do
     max_height = current_status["arena"]["dims"][1]
 
     my_face_to = my_state["direction"]
-    puts "----my_face_to: #{my_face_to}"
-    puts "----my_location: #{[my_state["x"], my_state["y"]]}"
+
     # prepare data
     attcker_possible_range = {
       "N" => [[my_state["x"], my_state["y"] + 1], [my_state["x"], my_state["y"] + 2], [my_state["x"], my_state["y"] + 3]],
@@ -51,15 +49,13 @@ post '/' do
       next_step_is_out_of_range = (my_state["x"] + 1) >= max_width
     end
 
-    puts "----attackable_range: #{attackable_range}"
-
     closest_person_location = [max_width, max_height]
     closest_person_dis = max_width + max_height
     attackable = false
     anyone_in_front_of_me = false
     attcker_count = 0
     better_direction = []
-    current_status["arena"]["state"].sort_by {|_, state| state["score"] }.each do |user_link, state|
+    current_status["arena"]["state"].each do |user_link, state|
       next if user_link == me
       anyone_in_front_of_me ||= my_next_step.include?([state["x"], state["y"]])
       can_attack = attackable_range.include?([state["x"], state["y"]])
@@ -132,25 +128,19 @@ post '/' do
     elsif my_state["wasHit"]
       "run"
     end
-    puts "----strategy: #{strategy}"
 
     case strategy
     when "fight"
       return "T"
     when "run"
       action = better_direction.flatten.sample
-      puts "----after strategy action take: #{action}"
       return action
     end
-
-    puts "----going to closest person: #{closest_person_location}"
 
     # find closest one and decide next step
     x_direction = closest_person_location[0] - my_state["x"]
     y_direction = closest_person_location[1] - my_state["y"]
 
-    puts "----x_direction: #{x_direction}"
-    puts "----y_direction: #{y_direction}"
     action_take = if x_direction == 0 && y_direction < 0
       # up
       case my_face_to
@@ -250,7 +240,6 @@ post '/' do
     end
 
     unless action_take == "F" && next_step_is_out_of_range
-      puts "----action take: #{action_take}"
       return action_take
     end
 
@@ -312,10 +301,8 @@ post '/' do
     end
     action = moves.sample
     if action == "F" && next_step_is_out_of_range
-      puts "----action take: trun R or L"
       return ["R", "L"].sample
     else
-      puts "----action take: #{action}"
       return action
     end
   rescue => e
